@@ -1,6 +1,6 @@
 @echo off
 rem Entry point for Windows terminals. Runs scripts\<command>.sh with Git Bash.
-rem Usage: gitops setup ^| ci-watch ^| release ^| release broken ^| fix-broken ^| drift-demo ^| rollback ^| status ^| teardown
+rem Usage: gitops setup ^| ci-watch ^| release ^| release broken ^| fix-broken ^| drift-demo ^| rollback ^| showcase ^| status ^| teardown
 setlocal
 set "BASH=%ProgramFiles%\Git\bin\bash.exe"
 if not exist "%BASH%" (
@@ -22,6 +22,7 @@ if "%~1"=="" (
   echo   drift-demo     change the cluster by hand and watch ArgoCD undo it
   echo   rollback       revert the last deployment through Git
   echo   open           open the app, ArgoCD and Gitea in the browser
+  echo   showcase       serve the public showcase locally on http://localhost:4173
   echo   status         show services, sync state, pods and history
   echo   teardown       delete everything
   exit /b 0

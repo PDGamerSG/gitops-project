@@ -81,6 +81,7 @@ Run these from PowerShell or cmd inside the `gitops-project` folder.
 | `.\gitops drift-demo` | Scales the deployment to 8 replicas and deletes its service with kubectl, then prints how many seconds ArgoCD takes to restore both. |
 | `.\gitops rollback` | Runs `git revert` on the last commit in `argo-deployment`. ArgoCD rolls the pods back to the previous image. |
 | `.\gitops open` | Opens the todo app, the ArgoCD tree view and the Gitea commit list in your browser. |
+| `.\gitops showcase` | Serves the public showcase locally at http://localhost:4173 so the live Workload, Gitea, and ArgoCD views can be presented offline. Set `SHOWCASE_PORT` to change the port. |
 | `.\gitops status` | Shows service health, ArgoCD sync state, pods, the running image and the config repo history. |
 | `.\gitops teardown` | Deletes the cluster, registry, Gitea and the `workspace` folder. |
 
