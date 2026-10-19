@@ -7,6 +7,13 @@ Kubernetes cluster, registry, Gitea server, and ArgoCD controller.
 
 Live project showcase: https://gitops-project.vercel.app
 
+The public showcase includes a live control-plane console with three linked
+views: the Todo workload, Gitea desired state, and the ArgoCD application tree.
+Changes made in the App tab are projected into a new desired-state commit,
+manifest image tag, ArgoCD sync phase, and three-pod resource tree. The state
+is kept in the browser and shared across open tabs, so the control-plane views
+can be shown side by side during a presentation.
+
 The root repository is the source of truth for the demo. The `app` directory is
 the deployable Node.js service; `config-repo` contains the desired Kubernetes
 state; and `infra` plus `scripts` provision and exercise the delivery flow.
