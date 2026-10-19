@@ -1,0 +1,5 @@
+{
+  "version": "1.0.0",
+  "theme": "#2563eb",
+  "message": "First release, deployed by ArgoCD from Git"
+}

@@ -1,0 +1,47 @@
+# Hosted version of the pipeline, for running the same flow on GitHub.
+# The offline demo runs the identical steps through scripts/ci-pipeline.sh
+# against the local Gitea server and local registry instead.
+name: Continuous Deployment (Prod)
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test, build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          build-args: GIT_SHA=${{ github.sha }}
+          tags: pdgamersg/todo-app-week-39:${{ github.sha }}
+
+      - name: Clone ops repo, update image tag, and push
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          git clone https://github.com/PDGamerSG/argo-deployment
+          cd argo-deployment
+          sed -i 's|image: .*/todo-app.*:.*|image: pdgamersg/todo-app-week-39:${{ github.sha }}|' manifest.yml
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Update todo-app image tag to ${{ github.sha }}"
+          git push https://${PAT}@github.com/PDGamerSG/argo-deployment.git main

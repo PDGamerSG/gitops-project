@@ -1,0 +1,19 @@
+# Local runtime state created by the GitOps setup scripts.
+workspace/
+
+# Node and editor files.
+node_modules/
+npm-debug.log*
+.DS_Store
+.idea/
+.vscode/
+
+# Local environment and credentials.
+.env
+.env.*
+!.env.example
+
+# Generated coverage and build output.
+coverage/
+dist/
+
