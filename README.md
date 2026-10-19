@@ -5,6 +5,8 @@ the app by itself is `docker compose up --build`, then open
 http://localhost:3000. The full demo uses the setup below to create a local
 Kubernetes cluster, registry, Gitea server, and ArgoCD controller.
 
+Live project showcase: https://gitops-project.vercel.app
+
 The root repository is the source of truth for the demo. The `app` directory is
 the deployable Node.js service; `config-repo` contains the desired Kubernetes
 state; and `infra` plus `scripts` provision and exercise the delivery flow.
