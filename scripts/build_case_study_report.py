@@ -287,17 +287,19 @@ def set_cover(doc):
         8: ("ON", 14, True),
         9: ("GITOPS-BASED CONTINUOUS DEPLOYMENT USING ARGOCD", 16, True),
         11: ("Submitted by", 14, False),
-        12: ("Pallab Das", 14, True),
-        13: ("24MIS0212", 14, False),
+        12: ("Pallab Das\nVaibhav Kumar", 14, True),
+        13: ("24MIS0212\n24MIS0476", 14, False),
         15: ("Under the guidance of", 14, False),
-        16: ("SCM Course Faculty", 14, True),
+        16: ("KARTHIKEYAN D", 14, True),
         18: ("Submitted in partial fulfilment of the requirements for", 11, False),
         19: ("Software Configuration Management (ISWE403L)", 14, True),
         21: ("October 2026", 14, True),
     }
     for index, (text, size, bold) in cover.items():
         paragraph = doc.paragraphs[index]
-        set_text(paragraph, text, size=size, bold=bold, align=WD_ALIGN_PARAGRAPH.CENTER, after=0, line=1.5)
+        # The supplied cover uses compact single spacing; body paragraphs use
+        # the template's required 1.5 spacing below the cover.
+        set_text(paragraph, text, size=size, bold=bold, align=WD_ALIGN_PARAGRAPH.CENTER, after=0, line=1.0)
 
 
 def build(template, output):
@@ -504,8 +506,8 @@ def build(template, output):
         "[5] GitHub, \"GitHub Actions Documentation,\" https://docs.github.com/actions, accessed October 2026.",
         "[6] Gitea, \"Gitea Documentation,\" https://docs.gitea.com/, accessed October 2026.",
         "[7] Kubernetes SIGs, \"kind - Kubernetes IN Docker,\" https://kind.sigs.k8s.io/, accessed October 2026.",
-        "[8] P. Das, \"GitOps continuous deployment with ArgoCD,\" project repository, https://github.com/PDGamerSG/gitops-project, October 2026.",
-        "[9] P. Das, \"GitOps project reference document,\" supplied ODT document, Research Paper folder, October 2026.",
+        "[8] P. Das and V. Kumar, \"GitOps continuous deployment with ArgoCD,\" project repository, https://github.com/PDGamerSG/gitops-project, October 2026.",
+        "[9] P. Das and V. Kumar, \"GitOps project reference document,\" supplied ODT document, Research Paper folder, October 2026.",
     ]
     for reference in references:
         add_body(doc, reference, role="reference")
@@ -546,7 +548,7 @@ def build(template, output):
 
     doc.core_properties.title = "GitOps-Based Continuous Deployment Using ArgoCD"
     doc.core_properties.subject = "Software Configuration Management case study project report"
-    doc.core_properties.author = "Pallab Das"
+    doc.core_properties.author = "Pallab Das; Vaibhav Kumar"
     doc.core_properties.keywords = "GitOps, ArgoCD, Kubernetes, SCM, continuous deployment"
     doc.save(output)
 
