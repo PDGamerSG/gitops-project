@@ -21,7 +21,7 @@ DEFAULT_OUTPUT = ROOT / "docs" / "GitOps_Case_Study_Project_Report.docx"
 ASSETS = ROOT / "public" / "assets"
 
 
-def set_font(run, size=None, bold=None, italic=None, name="Open Sans", color=None):
+def set_font(run, size=None, bold=None, italic=None, name="Times New Roman", color=None):
     run.font.name = name
     run._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), name)
     if size is not None:
@@ -34,7 +34,7 @@ def set_font(run, size=None, bold=None, italic=None, name="Open Sans", color=Non
         run.font.color.rgb = RGBColor.from_string(color)
 
 
-def set_para(paragraph, size=14, bold=None, align=WD_ALIGN_PARAGRAPH.LEFT, before=0, after=5, line=1.08):
+def set_para(paragraph, size=12, bold=None, align=WD_ALIGN_PARAGRAPH.LEFT, before=0, after=0, line=1.5):
     paragraph.alignment = align
     fmt = paragraph.paragraph_format
     fmt.space_before = Pt(before)
@@ -46,7 +46,7 @@ def set_para(paragraph, size=14, bold=None, align=WD_ALIGN_PARAGRAPH.LEFT, befor
     return paragraph
 
 
-def set_text(paragraph, text, size=14, bold=None, align=WD_ALIGN_PARAGRAPH.LEFT, before=0, after=5, line=1.08):
+def set_text(paragraph, text, size=12, bold=None, align=WD_ALIGN_PARAGRAPH.LEFT, before=0, after=0, line=1.5):
     for child in list(paragraph._p):
         if child.tag != qn("w:pPr"):
             paragraph._p.remove(child)
@@ -111,7 +111,11 @@ def prevent_row_split(row):
     tr_pr.append(OxmlElement("w:cantSplit"))
 
 
-def add_table(doc, headers, rows, widths=None):
+def add_table(doc, headers, rows, widths=None, caption=None):
+    if caption:
+        caption_paragraph = doc.add_paragraph()
+        set_text(caption_paragraph, caption, size=12, bold=True, after=3, line=1.0)
+        caption_paragraph.paragraph_format.keep_with_next = True
     table = doc.add_table(rows=1, cols=len(headers))
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.autofit = False
@@ -129,7 +133,7 @@ def add_table(doc, headers, rows, widths=None):
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
         shade_cell(cell, "FFFFFF")
         set_cell_margins(cell)
-        set_text(cell.paragraphs[0], str(value), size=13, bold=True, after=2, line=1)
+        set_text(cell.paragraphs[0], str(value), size=12, bold=True, after=2, line=1)
     for row_index, values in enumerate(rows):
         row = table.add_row()
         prevent_row_split(row)
@@ -139,7 +143,7 @@ def add_table(doc, headers, rows, widths=None):
             cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.TOP
             shade_cell(cell, "F2F2F2" if row_index % 2 == 1 else "FFFFFF")
             set_cell_margins(cell)
-            set_text(cell.paragraphs[0], str(value), size=13, after=2, line=1)
+            set_text(cell.paragraphs[0], str(value), size=12, after=2, line=1)
     doc.add_paragraph()
     return table
 
@@ -147,32 +151,38 @@ def add_table(doc, headers, rows, widths=None):
 def add_heading(doc, text, level=1):
     paragraph = doc.add_paragraph(style=f"Heading {level}")
     run = paragraph.add_run(text)
-    set_font(run, size=20 if level == 1 else 18, bold=True)
-    set_para(paragraph, size=20 if level == 1 else 18, bold=True, before=5, after=7)
+    size = 16 if level == 1 else 13
+    set_font(run, size=size, bold=True)
+    # Match the template's built-in heading geometry while keeping the
+    # heading attached to the paragraph that follows it.
+    set_para(paragraph, size=size, bold=True, before=24 if level == 1 else 10, after=0, line=1.5)
     paragraph.paragraph_format.keep_with_next = True
     return paragraph
 
 
 def add_body(doc, text, role="body"):
-    size = {"lead": 18, "body": 14, "small": 13, "reference": 12}[role]
+    # The supplied template explicitly requires Times New Roman, 12-point
+    # body text and 1.5 line spacing.  Roles remain for call-site clarity,
+    # but do not introduce non-template font sizes.
+    size = 12
     paragraph = doc.add_paragraph()
-    set_text(paragraph, text, size=size, after=5, line=1.08)
+    set_text(paragraph, text, size=size, after=0, line=1.5)
     return paragraph
 
 
 def add_bullets(doc, items):
     for item in items:
         paragraph = doc.add_paragraph(style="List Bullet")
-        set_text(paragraph, item, size=14, after=3, line=1.08)
+        set_text(paragraph, item, size=12, after=0, line=1.5)
         paragraph.paragraph_format.left_indent = Inches(0.25)
 
 
 def add_label(doc, text, underline=False):
-    paragraph = doc.add_paragraph()
+    paragraph = doc.add_paragraph(style="Heading 2")
     run = paragraph.add_run(text)
-    set_font(run, size=20, bold=True)
+    set_font(run, size=13, bold=True)
     run.underline = underline
-    set_para(paragraph, size=20, bold=True, before=5, after=5)
+    set_para(paragraph, size=13, bold=True, before=10, after=0, line=1.5)
     paragraph.paragraph_format.keep_with_next = True
     return paragraph
 
@@ -189,7 +199,7 @@ def add_code(doc, text):
     shd.set(qn("w:fill"), "F2F2F2")
     p_pr.append(shd)
     run = paragraph.add_run(text)
-    set_font(run, size=11, name="Consolas")
+    set_font(run, size=10, name="Courier New")
     return paragraph
 
 
@@ -203,7 +213,7 @@ def add_image(doc, path, caption, width=6.75):
     run = paragraph.add_run()
     run.add_picture(str(path), width=Inches(width))
     caption_paragraph = doc.add_paragraph()
-    set_text(caption_paragraph, caption, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, after=8, line=1.0)
+    set_text(caption_paragraph, caption, size=12, align=WD_ALIGN_PARAGRAPH.CENTER, after=0, line=1.0)
     return paragraph
 
 
@@ -228,7 +238,7 @@ def add_toc_field(doc):
     end = OxmlElement("w:fldChar")
     end.set(qn("w:fldCharType"), "end")
     run._r.extend([begin, instr, separate, text, end])
-    set_para(paragraph, size=14, after=8)
+    set_para(paragraph, size=12, after=0, line=1.5)
 
 
 def remove_body_after_cover(doc):
@@ -244,43 +254,50 @@ def remove_body_after_cover(doc):
 
 def configure_styles(doc):
     normal = doc.styles["Normal"]
-    normal.font.name = "Open Sans"
-    normal._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Open Sans")
-    normal.font.size = Pt(14)
-    normal.paragraph_format.line_spacing = 1.08
-    normal.paragraph_format.space_after = Pt(5)
-    for name, size in (("Heading 1", 20), ("Heading 2", 18)):
+    normal.font.name = "Times New Roman"
+    normal._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Times New Roman")
+    normal.font.size = Pt(12)
+    normal.paragraph_format.line_spacing = 1.5
+    normal.paragraph_format.space_after = Pt(0)
+    for name, size, before in (("Heading 1", 16, 24), ("Heading 2", 13, 10)):
         style = doc.styles[name]
-        style.font.name = "Open Sans"
-        style._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Open Sans")
+        style.font.name = "Times New Roman"
+        style._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Times New Roman")
         style.font.size = Pt(size)
         style.font.bold = True
-        style.paragraph_format.space_before = Pt(5)
-        style.paragraph_format.space_after = Pt(7)
+        style.paragraph_format.space_before = Pt(before)
+        style.paragraph_format.space_after = Pt(0)
+        style.paragraph_format.line_spacing = 1.5
         style.paragraph_format.keep_with_next = True
+    for name in ("List Bullet", "List Number"):
+        try:
+            style = doc.styles[name]
+            style.font.name = "Times New Roman"
+            style._element.get_or_add_rPr().rFonts.set(qn("w:eastAsia"), "Times New Roman")
+            style.font.size = Pt(12)
+        except KeyError:
+            pass
 
 
 def set_cover(doc):
     cover = {
-        4: "School of Computer Science Engineering and Information Systems",
-        5: "Fall Semester 2026-2027",
-        7: "CASE STUDY PROJECT REPORT",
-        9: "GITOPS-BASED CONTINUOUS DEPLOYMENT USING ARGOCD",
-        12: "Pallab Das",
-        13: "24MIS0212",
-        16: "SCM Course Faculty",
-        19: "Software Configuration Management (ISWE403L)",
-        21: "October 2026",
+        4: ("School of Computer Science Engineering and Information Systems", 14, True),
+        5: ("Fall Semester 2026-2027", 14, True),
+        7: ("CASE STUDY PROJECT REPORT", 20, True),
+        8: ("ON", 14, True),
+        9: ("GITOPS-BASED CONTINUOUS DEPLOYMENT USING ARGOCD", 16, True),
+        11: ("Submitted by", 14, False),
+        12: ("Pallab Das", 14, True),
+        13: ("24MIS0212", 14, False),
+        15: ("Under the guidance of", 14, False),
+        16: ("SCM Course Faculty", 14, True),
+        18: ("Submitted in partial fulfilment of the requirements for", 11, False),
+        19: ("Software Configuration Management (ISWE403L)", 14, True),
+        21: ("October 2026", 14, True),
     }
-    for index, text in cover.items():
+    for index, (text, size, bold) in cover.items():
         paragraph = doc.paragraphs[index]
-        set_text(paragraph, text, size=14, bold=index in {4, 5, 7, 9, 12, 16, 19, 21}, align=WD_ALIGN_PARAGRAPH.CENTER, after=0, line=1.5)
-        if index == 7:
-            for run in paragraph.runs:
-                set_font(run, size=20, bold=True)
-        if index == 9:
-            for run in paragraph.runs:
-                set_font(run, size=16, bold=True)
+        set_text(paragraph, text, size=size, bold=bold, align=WD_ALIGN_PARAGRAPH.CENTER, after=0, line=1.5)
 
 
 def build(template, output):
@@ -289,17 +306,21 @@ def build(template, output):
     configure_styles(doc)
     set_cover(doc)
     remove_body_after_cover(doc)
-    add_page_break(doc)
 
     add_heading(doc, "ABSTRACT", 1)
+    # The cover's trailing break can be pushed onto a second page by Word
+    # when the cover fills the page. Start the report with a paragraph-level
+    # break instead, which reliably produces one cover page followed by the
+    # abstract without an empty interstitial page.
+    doc.paragraphs[-1].paragraph_format.page_break_before = True
     add_body(doc, "GitOps applies software configuration management principles to application delivery by making Git the auditable source of desired infrastructure and deployment state. This case study implements a complete pull-based delivery system for a small Node.js Todo service. A source repository is built and tested, an immutable container image is published to a local registry, and a separate configuration repository records the Kubernetes image tag. ArgoCD watches that repository and continuously reconciles a three-replica workload in a local kind cluster. Gitea provides the local Git repositories, while Docker and shell scripts make the workflow reproducible on one Windows machine. The project also includes a public showcase that exposes the workload, Gitea desired state, and ArgoCD application tree as connected views. The verified implementation passed the Node test suite, built and health-checked with Docker Compose, reached Synced and Healthy status in ArgoCD, recovered configuration drift, and supported Git-based rollback. The result demonstrates how a small but complete GitOps loop improves traceability, repeatability, recovery, and presentation of deployment changes.", role="lead")
     add_body(doc, "Keywords: GitOps; ArgoCD; Kubernetes; continuous deployment; software configuration management", role="small")
 
     add_heading(doc, "TABLE OF CONTENTS", 1)
     add_toc_field(doc)
     add_heading(doc, "LIST OF FIGURES / TABLES / ABBREVIATIONS", 1)
-    add_body(doc, "Figures: Figure 1. Declarative GitOps deployment loop; Figure 2. CI workflow; Figure 3. Live control-plane console; Figure 4. Gitea desired-state repository; Figure 5. ArgoCD application tree; Figure 6. Todo runtime; Figure 7. ArgoCD resource tree diagram.", role="small")
-    add_body(doc, "Tables: Table 1. Functional requirements; Table 2. Non-functional requirements; Table 3. Tools and technologies; Table 4. Evaluation results; Table 5. Risk controls.", role="small")
+    add_body(doc, "Figures: Figures 1-7 document the architecture, runtime, repository, ArgoCD, and hosted control-plane evidence. Appendix Figures C1-C9 reproduce the supplied setup, CI, Kubernetes, ArgoCD, and runtime diagrams.", role="small")
+    add_body(doc, "Tables: Tables 1-9 identify the literature gap, requirements, tools, evaluation criteria, root causes, risks, implementation results, and evaluation evidence.", role="small")
     add_body(doc, "Abbreviations: CI - Continuous Integration; CD - Continuous Delivery; GitOps - Git-based operations; IaC - Infrastructure as Code; YAML - YAML Ain't Markup Language; UI - User Interface; SHA - Secure Hash Algorithm.", role="small")
 
     add_page_break(doc)
@@ -326,7 +347,7 @@ def build(template, output):
     add_page_break(doc)
     add_heading(doc, "CHAPTER 2: LITERATURE REVIEW / EXISTING SYSTEM", 1)
     add_heading(doc, "2.1 Review of Related Work", 2)
-    add_body(doc, "The OpenGitOps principles describe a desired-state, declarative, versioned, immutable, and continuously reconciled operating model. ArgoCD applies this model to Kubernetes by comparing the manifests in a Git source with the live resources in a cluster. Kubernetes provides the declarative resource model and controllers that make the desired state actionable. GitHub Actions and similar CI systems provide the push phase: testing code, building an image, and updating a configuration repository. This project combines those ideas in a small local environment so each handoff can be inspected directly.")
+    add_body(doc, "The OpenGitOps principles describe a desired-state, declarative, versioned, immutable, and continuously reconciled operating model [1]. ArgoCD applies this model to Kubernetes by comparing the manifests in a Git source with the live resources in a cluster [2]. Kubernetes provides the declarative resource model and controllers that make the desired state actionable [3]. GitHub Actions and similar CI systems provide the push phase: testing code, building an image, and updating a configuration repository [5]. This project combines those ideas in a small local environment so each handoff can be inspected directly.")
     add_heading(doc, "2.2 Existing System or Current Practice", 2)
     add_body(doc, "A manual workflow typically builds an image, pushes it to a registry, and then applies a deployment file with kubectl. The operator may know which command was run, but the final state is not necessarily represented by a reviewable commit. The source and infrastructure changes can also be mixed together, making it harder to distinguish application code from deployment intent.")
     add_heading(doc, "2.3 Limitations / Research Gap", 2)
@@ -336,7 +357,7 @@ def build(template, output):
         ["Mutable image labels", "A deployment cannot be tied reliably to one source revision."],
         ["Manual recovery", "Rollback and drift correction depend on operator memory and timing."],
         ["Limited evidence", "A demo can show a final screen without proving the steps that produced it."],
-    ], widths=[2.35, 4.9])
+    ], widths=[2.35, 4.9], caption="Table 1. Existing workflow gap analysis.")
     add_heading(doc, "2.4 Summary", 2)
     add_body(doc, "The review supports a small pull-based design with Git as the control boundary. The project therefore keeps CI responsible for tests, image creation, and a configuration commit, while ArgoCD remains responsible for reading Git and applying the desired state. This separation is the basis for the proposed solution.")
 
@@ -353,7 +374,7 @@ def build(template, output):
         ["FR3", "Record the desired image in a separate Git configuration repository.", "config-repo/manifest.yml and Gitea desired-state view."],
         ["FR4", "Synchronize and self-heal the Kubernetes workload.", "ArgoCD Application with automated, prune, and selfHeal."],
         ["FR5", "Show the change in the workload, Gitea, and ArgoCD views.", "Live control-plane console and browser interaction check."],
-    ], widths=[0.55, 3.8, 2.9])
+    ], widths=[0.55, 3.8, 2.9], caption="Table 2. Functional requirements.")
     add_heading(doc, "3.4 Non-functional Requirements", 2)
     add_table(doc, ["Quality", "Target in this case", "Implementation"], [
         ["Repeatability", "One workstation can recreate the environment.", "gitops.cmd setup, Docker Compose, kind, and scripts."],
@@ -361,7 +382,7 @@ def build(template, output):
         ["Recovery", "Drift and rollback are observable and reversible.", "ArgoCD self-heal and Git revert workflow."],
         ["Usability", "A reviewer can follow the workflow without hidden steps.", "Tabbed showcase, screenshots, diagrams, and README."],
         ["Safety", "Broken application code does not ship.", "Tests run before the runtime image is produced."],
-    ], widths=[1.2, 2.65, 3.4])
+    ], widths=[1.2, 2.65, 3.4], caption="Table 3. Non-functional requirements.")
     add_heading(doc, "3.5 Tools and Technologies", 2)
     add_table(doc, ["Tool / technology", "Version or form", "Purpose"], [
         ["Node.js", "22 Alpine image", "Todo service and unit tests."],
@@ -371,7 +392,7 @@ def build(template, output):
         ["Gitea", "Local Git service", "Source and desired-state repositories."],
         ["Registry", "registry:2 at localhost:5001", "Local immutable image storage."],
         ["GitHub / Vercel", "Public repository and showcase", "Source publication and hosted presentation."],
-    ], widths=[1.65, 2.05, 3.55])
+    ], widths=[1.65, 2.05, 3.55], caption="Table 4. Tools and technologies.")
     add_heading(doc, "3.6 Evaluation Criteria", 2)
     add_table(doc, ["Criterion", "Pass condition"], [
         ["Application correctness", "All Node.js tests pass and health check returns success."],
@@ -380,7 +401,7 @@ def build(template, output):
         ["Drift recovery", "Manual cluster drift is restored by ArgoCD without editing the cluster back."],
         ["Rollback", "A Git revert returns the desired image to the previous revision."],
         ["Communication", "Screenshots and the live console explain the same state consistently."],
-    ], widths=[2.0, 5.25])
+    ], widths=[2.0, 5.25], caption="Table 5. Evaluation criteria.")
 
     add_page_break(doc)
     add_heading(doc, "CHAPTER 4: CASE STUDY ANALYSIS AND PROPOSED SOLUTION", 1)
@@ -392,7 +413,7 @@ def build(template, output):
         ["Configuration drift", "Operators can change live resources outside version control.", "Enable ArgoCD automated sync and self-heal."],
         ["Difficult rollback", "The last known good configuration is not easy to identify.", "Use a Git revert on the desired-state repository."],
         ["Unclear evidence", "Final UI state hides intermediate handoffs.", "Expose CI, Gitea, ArgoCD, and runtime evidence together."],
-    ], widths=[1.8, 2.65, 2.8])
+    ], widths=[1.8, 2.65, 2.8], caption="Table 6. Root-cause and gap analysis.")
     add_heading(doc, "4.3 Proposed Solution", 2)
     add_body(doc, "The proposed solution has two repositories and one reconciliation boundary. The source repository contains server.js, version.json, the Dockerfile, and tests. The configuration repository contains manifest.yml. CI builds the application image, pushes it to the registry, changes only the image tag in manifest.yml, and pushes that commit. ArgoCD polls the configuration repository, applies the Deployment and Service, reports health, and restores drift. The public showcase mirrors the same relationships in a readable interface.")
     add_heading(doc, "4.4 System Design / Workflow", 2)
@@ -428,7 +449,7 @@ def build(template, output):
         ["Mutable deployment state", "The manifest records a commit-addressed image tag and ArgoCD self-heals drift."],
         ["Supply-chain trust", "The Docker test stage runs before the runtime image is created; production signing is future work."],
         ["Hosted evidence confusion", "The showcase labels captured localhost screens and separates them from the live browser projection."],
-    ], widths=[2.05, 5.2])
+    ], widths=[2.05, 5.2], caption="Table 7. Security, ethics, and risk controls.")
 
     add_page_break(doc)
     add_heading(doc, "CHAPTER 5: RESULTS AND DISCUSSION", 1)
@@ -442,7 +463,7 @@ def build(template, output):
         ["Drift demonstration", "Replica and Service drift were restored automatically by ArgoCD.", "Pass"],
         ["Rollback", "A Git revert returned the desired image to the previous revision.", "Pass"],
         ["Hosted showcase", "Vercel deployment served the live control-plane asset and page successfully.", "Pass"],
-    ], widths=[1.8, 4.55, 0.9])
+    ], widths=[1.8, 4.55, 0.9], caption="Table 8. Implementation and test results.")
     add_image(doc, ASSETS / "gitea-source-repository.png", "Figure 6. Gitea source repository containing the application, tests, Dockerfile, and release metadata.", width=6.55)
     add_heading(doc, "5.2 Evaluation", 2)
     add_body(doc, "The functional criteria were met because the application, image build, desired state, reconciliation, and presentation are all connected. The three-replica Deployment provides a visible rolling-update target. The commit-addressed image and Gitea history provide traceability. The ArgoCD tree provides a direct view of the resources that were created from Git. The workflow simulator and live control-plane console make the same transitions understandable to a reviewer who does not have the local cluster open.")
@@ -452,7 +473,7 @@ def build(template, output):
         ["Reconciliation", "ArgoCD tree and status badges", "The cluster converges to Git and reports health."],
         ["Recovery", "drift-demo and rollback scripts", "The system can restore or reverse state through Git."],
         ["Communication", "Showcase tabs and screenshots", "The workflow is visible without hiding the important handoffs."],
-    ], widths=[1.65, 2.8, 2.8])
+    ], widths=[1.65, 2.8, 2.8], caption="Table 9. Evaluation evidence.")
     add_heading(doc, "5.3 Discussion", 2)
     add_body(doc, "The main benefit is the separation between the push phase and the pull phase. CI does not need to run kubectl against the cluster, and the cluster does not need to trust every build process with direct write access. The configuration repository becomes the reviewable boundary for deployment intent. ArgoCD also turns drift from a silent operational problem into an observable state that can be repaired. The design is intentionally small, but the same boundaries can be extended to multiple environments and clusters.")
     add_heading(doc, "5.4 Limitations", 2)
@@ -492,7 +513,7 @@ def build(template, output):
     add_page_break(doc)
     add_heading(doc, "APPENDICES", 1)
     add_heading(doc, "Appendix A: Project Structure", 2)
-    add_code(doc, "gitops-project/\n├── app/                         Node.js workload, tests, Dockerfile\n├── config-repo/                 Kubernetes desired state\n├── infra/                       kind and ArgoCD manifests\n├── scripts/                     setup, release, drift, rollback, showcase\n├── public/                      Vercel showcase and evidence assets\n├── docker-compose.yml           standalone runtime\n└── gitops.cmd                   Windows command entry point")
+    add_code(doc, "gitops-project/\n|-- app/                         Node.js workload, tests, Dockerfile\n|-- config-repo/                 Kubernetes desired state\n|-- infra/                       kind and ArgoCD manifests\n|-- scripts/                     setup, release, drift, rollback, showcase\n|-- public/                      Vercel showcase and evidence assets\n|-- docker-compose.yml           standalone runtime\n`-- gitops.cmd                   Windows command entry point")
     add_heading(doc, "Appendix B: Demonstration Commands", 2)
     add_code(doc, ".\\gitops.cmd setup\n.\\gitops.cmd ci-watch\n.\\gitops.cmd release\n.\\gitops.cmd drift-demo\n.\\gitops.cmd rollback\n.\\gitops.cmd showcase")
     add_body(doc, "The local showcase is available at http://localhost:4173. The local Todo workload is exposed at http://localhost:8081 after setup, ArgoCD at http://localhost:8080, Gitea at http://localhost:3300, and the registry at http://localhost:5001.", role="small")
